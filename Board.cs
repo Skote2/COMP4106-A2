@@ -23,6 +23,11 @@ namespace COMP4106_A2 {
             columns = numColumns;
             grid = new byte[numRows, numColumns];
         }
+        public Board(Board original) : this(original.Rows, original.columns, original.expert) {
+            for (short r = 0; r < original.Rows; r++)
+                for (short c = 0; c < original.columns; c++)
+                    grid[r, c] = original.grid[r, c];
+        }
 
 
         //getters
@@ -79,12 +84,20 @@ namespace COMP4106_A2 {
             return false;
         }
         public bool hasMove() {
+            if (checkWin())
+                return false;
             if (expert)
                 return true;
             for (byte c = 0; c < columns; c++)
                 if (grid[Rows-1, c] == 0)
                     return true;
             return false;//nothing open on the top and can't take from bottom therefore no moves edge case
+        }
+        public short score () {
+            short score = 0;
+            score += heruristic1();
+            score += heruristic2();
+            return score;
         }
         override public string ToString() {
             string s = "  Y\n";
@@ -105,6 +118,7 @@ namespace COMP4106_A2 {
 
             return s + '\n';
         }
+    
 
 
         //helper functions
@@ -143,7 +157,7 @@ namespace COMP4106_A2 {
             }
             return depth;//this is an else clause really
         }
-        private byte ownerLongestChain() {
+        private byte ownerLongestChain() {//This will return the owner of the first of length 4 it finds, edge cases for larger are if larger it will take it, if multiple vs one it still takes the first it finds.
             byte longestChain = 0;
             byte chain = 0;
             byte owner = 0;
@@ -152,13 +166,69 @@ namespace COMP4106_A2 {
                     if (grid[r, c] != 0){
                         for (byte i = 0; i <= 3; i++){
                             chain = goFetch(r, c, (Board.direction)i, grid[r, c], 0);
-                            if (chain > longestChain)
+                            if (chain > longestChain){
                                 longestChain = chain;
                                 owner = grid[r, c];
+                            }
                         }
                     }
             }
             return owner;
+        }
+        private short heruristic1 () {
+            byte chain;
+            short score = 0;
+            for (byte r = 0; r < Rows; r++){//This is really inefficient, ignore it please...
+                for (byte c = 0; c < columns; c++)
+                    if (grid[r, c] != 0){
+                        for (byte i = 0; i <= 3; i++){
+                            chain = goFetch(r, c, (Board.direction)i, grid[r, c], 0);
+                            if (grid[r, c] == 1)
+                                score += (short)(2^chain);
+                            else
+                                score -= (short)((2^chain));
+                        }
+                    }
+            }
+            return score;
+        }
+        private short heruristic2 () {
+            byte chain;
+            short score = 0;
+            for (byte r = 0; r < Rows; r++){
+                for (byte c = 0; c < columns; c++)
+                    if (grid[r, c] != 0){
+                        for (byte i = 0; i <= 3; i++){
+                            chain = H2Fetch(r, c, (Board.direction)i, grid[r, c], 0);
+                            if (grid[r, c] == 1)
+                                score += (short)(2^chain);
+                            else
+                                score -= (short)(2^chain);
+                        }
+                    }
+            }
+            return score;
+        }
+        private byte H2Fetch(byte r, byte c, direction dir, byte id, byte depth) {// This algorithm is made specifically for the heuristic where interupting a chain will give bonus score to incentivise minmax AI to play defensively
+            if (r >= Rows)
+                return depth;
+            if (c >= columns)
+                return depth;
+            if (grid[r, c] == id) {
+                switch (dir) {
+                    case direction.up:
+                        return goFetch(++r, c, dir, id, ++depth);
+                    case direction.right:
+                        return goFetch(r, ++c, dir, id, ++depth);
+                    case direction.upRight:
+                        return goFetch(++r, ++c, dir, id, ++depth);
+                    case direction.upLeft:
+                        return goFetch(++r, --c, dir, id, ++depth);
+                }
+            }
+            if (grid[r, c] != 0 && grid[r, c] != id)
+                return depth;
+            return 0;
         }
     }
 }
