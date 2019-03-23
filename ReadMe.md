@@ -40,4 +40,4 @@ since the only children elidgable to be brough up the tree are the minimum and m
 
 ### Performance
 
-dunno yet, I'll tell ya when it works
+Light tweaking of the Heuristics can have massive effects but generally the Intelligent AI won 80+% of the time. Some light tweaks were observed making the AI significantly more capable (90%ish). I'm certain there is some detail in the implementation which requires a slight tweak to get the AI winning nearly every game. It seems to prioritize stacking over anything else even when it doesn't make sense to do so, which is likely a result of the way I'm rewarding the AI. The heuristics rewarded the AI for extending lines even if they can't win so it doesn't know if it's following frugal routes. This could have been fixed but I just never got around to it.
